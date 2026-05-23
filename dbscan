@@ -1,0 +1,70 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import DBSCAN
+from sklearn.datasets import make_blobs
+
+
+# Create sample locations (LA, NY, Chicago)
+centers = [[34.05, -118.24], [40.71, -74.00], [41.87, -87.62]]
+
+X, _ = make_blobs(
+    n_samples=300,
+    centers=centers,
+    cluster_std=0.5,
+    random_state=42
+)
+
+
+# Create DataFrame
+df = pd.DataFrame(X, columns=['Latitude', 'Longitude'])
+
+print(df.head())
+
+
+# Apply DBSCAN
+dbscan = DBSCAN(eps=0.3, min_samples=5)
+
+df['Cluster'] = dbscan.fit_predict(df[['Latitude', 'Longitude']])
+
+
+# Separate clusters and noise
+clusters = df[df['Cluster'] != -1]
+noise = df[df['Cluster'] == -1]
+
+
+# Plot clusters
+plt.figure(figsize=(10, 6))
+
+plt.scatter(
+    clusters['Longitude'],
+    clusters['Latitude'],
+    c=clusters['Cluster'],
+    cmap='viridis',
+    label='Clusters',
+    s=50
+)
+
+plt.scatter(
+    noise['Longitude'],
+    noise['Latitude'],
+    c='red',
+    marker='x',
+    label='Noise (Outliers)',
+    s=50
+)
+
+plt.title('DBSCAN Clustering of Tweet Locations')
+plt.xlabel('Longitude')
+plt.ylabel('Latitude')
+
+plt.legend()
+plt.grid(True)
+
+plt.show()
+
+
+# Print results
+print(f"Number of clusters found: {len(set(df['Cluster'])) - (1 if -1 in df['Cluster'].values else 0)}")
+
+print(f"Number of noise points: {len(noise)}")
